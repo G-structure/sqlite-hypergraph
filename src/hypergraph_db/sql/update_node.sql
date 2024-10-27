@@ -1,0 +1,1 @@
+UPDATE nodes SET body = json(?), updated_at = CURRENT_TIMESTAMP WHERE id = ?;

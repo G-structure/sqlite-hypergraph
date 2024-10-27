@@ -1,0 +1,1 @@
+INSERT INTO hyperedges (id, properties, nodes) VALUES (?, json(?), json(?));

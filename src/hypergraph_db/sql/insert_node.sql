@@ -1,0 +1,1 @@
+INSERT INTO nodes (body) VALUES (json(?));

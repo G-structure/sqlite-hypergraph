@@ -1,0 +1,1 @@
+UPDATE hyperedges SET properties = json(?), updated_at = CURRENT_TIMESTAMP WHERE id = ?;
