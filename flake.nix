@@ -28,6 +28,7 @@
             gnumake
             python3
             sqlite
+            curl
           ];
 
           shellHook = ''
@@ -49,7 +50,19 @@
             gnumake
             python3
             sqlite
+            curl
           ];
+
+          # Create temp directories for Emscripten
+          preBuild = ''
+            # Create cache directories
+            export EM_CACHE=$TMPDIR/emscripten/cache
+            export EM_PORTS=$TMPDIR/emscripten/ports
+            mkdir -p $EM_CACHE $EM_PORTS
+
+            # Source emscripten environment
+            source ${pkgs.emscripten}/share/emscripten/env
+          '';
 
           buildPhase = ''
             # Set environment variables
@@ -67,6 +80,9 @@
             mkdir -p $out
             cp dist/.wasm/* $out/
           '';
+
+          # Use TMPDIR for temporary files
+          TMPDIR = "/tmp";
         };
 
         defaultPackage = self.packages.${system}.wasm;
