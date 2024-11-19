@@ -1,6 +1,5 @@
 from typing import Optional
 
-
 class Node:
     def __init__(self, body: str, node_id: Optional[str] = None):
         self.id = node_id

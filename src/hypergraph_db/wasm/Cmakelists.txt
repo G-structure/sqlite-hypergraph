@@ -1,0 +1,53 @@
+# CMakeLists.txt
+cmake_minimum_required(VERSION 3.13)
+project(hypergraph-wasm C)
+
+# Enable WebAssembly build
+set(CMAKE_TOOLCHAIN_FILE $ENV{EMSDK}/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake)
+
+# Add SQLite
+add_library(sqlite3 STATIC IMPORTED)
+
+# Add sqlite-vec
+add_subdirectory(${CMAKE_SOURCE_DIR}/vendor/sqlite-vec)
+
+# Add sqlite-lembed
+add_subdirectory(${CMAKE_SOURCE_DIR}/vendor/sqlite-lembed)
+
+# Add our hypergraph library
+add_library(hypergraph
+    src/hypergraph_db/wasm/hypergraph.c
+)
+
+target_include_directories(hypergraph PUBLIC
+    ${CMAKE_SOURCE_DIR}/vendor/sqlite-vec
+    ${CMAKE_SOURCE_DIR}/vendor/sqlite-lembed
+)
+
+target_link_libraries(hypergraph
+    sqlite3
+    sqlite-vec
+    sqlite-lembed
+)
+
+# WASM build configuration
+set(CMAKE_EXECUTABLE_SUFFIX ".wasm")
+
+add_executable(hypergraph-wasm src/hypergraph_db/wasm/hypergraph.c)
+
+target_link_options(hypergraph-wasm PRIVATE
+    -s WASM=1
+    -s EXPORTED_FUNCTIONS='["_malloc", "_free", "_init_hypergraph_db", "_insert_node"]'
+    -s EXPORTED_RUNTIME_METHODS='["ccall", "cwrap", "stringToUTF8", "UTF8ToString"]'
+    -s ALLOW_MEMORY_GROWTH=1
+)
+
+target_link_libraries(hypergraph-wasm
+    hypergraph
+)
+
+# Installation
+install(TARGETS hypergraph-wasm
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+)
