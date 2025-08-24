@@ -15,6 +15,17 @@ def test_insert_node(db):
     assert inserted_node.id == "node1"
 
 
+def test_search_nodes_by_property(db):
+    node1 = Node(body='{"id": "node1", "name": "Alpha"}')
+    node2 = Node(body='{"id": "node2", "name": "Beta"}')
+    db.insert_node(node1)
+    db.insert_node(node2)
+
+    results = db.search_nodes_by_property("name", "Alpha")
+    assert len(results) == 1
+    assert results[0].id == "node1"
+
+
 def test_insert_hyperedge(db):
     hyperedge = Hyperedge(
         edge_id="edge1", properties='{"weight":1}', nodes='["node1", "node2"]'

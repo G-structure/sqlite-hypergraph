@@ -66,8 +66,8 @@ class HypergraphDB:
     def search_nodes_by_property(self, key: str, value: Any) -> List[Node]:
         """Search for nodes based on properties in their JSON body."""
         sql = SQLScripts.get_script("search_nodes_by_properties.sql")
-        sql = sql.replace("$.key", f"$['{key}']")
-        cursor = self.connection.execute(sql, (value,))
+        json_path = f"$.{key}"
+        cursor = self.connection.execute(sql, (json_path, value))
         rows = cursor.fetchall()
         return [Node(body=row["body"], node_id=row["id"]) for row in rows]
 
