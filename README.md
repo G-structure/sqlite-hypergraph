@@ -1,117 +1,116 @@
-Hypergraph DB API
+# Hypergraph DB API
 
-A Python API for managing a temporal directed hypergraph SQLite database with text embeddings. This API uses sqlite-vec for vector search and sqlite-lembed for generating text embeddings. It is designed for handling complex graph data, including nodes, hyperedges, and embeddings, while enabling vector similarity searches and batch operations for efficiency.
+A Python API for managing a temporal directed hypergraph SQLite database with text embeddings. It uses `sqlite-vec` for vector search and `sqlite-lembed` for generating embeddings. The API handles complex graph data, including nodes, hyperedges, and embeddings, while enabling vector similarity searches and batch operations for efficiency.
 
-Key Features
+## Key Features
 
-  •	Nodes: Represent entities or objects in the hypergraph. Stored as JSON objects.
-  •	Hyperedges: Connect multiple nodes with direction and store additional properties.
-  •	Embeddings: Store vector embeddings of node content for semantic searches.
-  •	Batch Operations: Insert multiple embeddings or nodes in a single transaction.
-  •	Text Embedding Generation: Uses sqlite-lembed to generate embeddings from text.
-  •	Vector Search: Leverages sqlite-vec for efficient nearest-neighbor searches.
-  •	Hypergraph Traversal: Traverse the hypergraph from any starting node, exploring connected edges and nodes.
+- **Nodes**: Represent entities or objects in the hypergraph. Stored as JSON objects.
+- **Hyperedges**: Connect multiple nodes with direction and store additional properties.
+- **Embeddings**: Store vector embeddings of node content for semantic searches.
+- **Batch Operations**: Insert multiple embeddings or nodes in a single transaction.
+- **Text Embedding Generation**: Uses `sqlite-lembed` to generate embeddings from text.
+- **Vector Search**: Leverages `sqlite-vec` for efficient nearest‑neighbor searches.
+- **Hypergraph Traversal**: Traverse the hypergraph from any starting node, exploring connected edges and nodes.
 
-Table of Contents
+## Table of Contents
 
-  1.	Requirements
-  2.	Installation
-  3.	Usage
-  •	Initializing the Database
-  •	Inserting Nodes and Hyperedges
-  •	Inserting Embeddings
-  •	Batch Inserting Embeddings
-  •	Searching Nodes
-  •	Performing Vector Search
-  •	Hypergraph Traversal
-  4.	Running Tests
-  5.	Contributing
-  6.	License
+- [Requirements](#requirements)
+- [Installation](#installation)
+- [Usage](#usage)
+  - [Initializing the Database](#initializing-the-database)
+  - [Inserting Nodes and Hyperedges](#inserting-nodes-and-hyperedges)
+  - [Inserting Embeddings](#inserting-embeddings)
+  - [Batch Inserting Embeddings](#batch-inserting-embeddings)
+  - [Searching Nodes](#searching-nodes)
+  - [Performing Vector Search](#performing-vector-search)
+  - [Hypergraph Traversal](#hypergraph-traversal)
+  - [Closing the Database Connection](#closing-the-database-connection)
+- [Running Tests](#running-tests)
+- [Contributing](#contributing)
+- [License](#license)
+- [Summary](#summary)
 
-Requirements
+## Requirements
 
-  •	Python 3.10+
-  •	SQLite 3.31.0+ (for JSON and virtual table support)
-  •	sqlite-vec and sqlite-lembed SQLite extensions
-  •	curl for downloading embedding models
+- Python 3.10+
+- SQLite 3.31.0+ (for JSON and virtual table support)
+- `sqlite-vec` and `sqlite-lembed` SQLite extensions
+- `curl` for downloading embedding models
 
-Python Dependencies:
+### Python Dependencies
 
-  •	sqlite-utils
-  •	pandas
-  •	numpy
-  •	sqlparse
-  •	black
+- `sqlite-utils`
+- `pandas`
+- `numpy`
+- `sqlparse`
+- `black`
 
-Installation
+## Installation
 
-  1.	Clone the repository:
+1. Clone the repository:
 
-git clone https://github.com/yourusername/hypergraph-db-api.git
-cd hypergraph-db-api
+   ```bash
+   git clone https://github.com/yourusername/hypergraph-db-api.git
+   cd hypergraph-db-api
+   ```
 
+2. Install dependencies using Poetry:
 
-  2.	Install dependencies:
-This project uses Poetry for dependency management. If you don’t have Poetry installed, follow the instructions here.
-To install the dependencies, run:
+   ```bash
+   poetry install
+   ```
 
-poetry install
+   If you don’t have Poetry installed, follow the instructions [here](https://python-poetry.org/docs/#installation).
 
+3. Download and set up the embedding model:
 
-  3.	Download and set up the embedding model:
-We use the all-MiniLM-L6-v2 model from Hugging Face, which has been converted to GGUF format for use with sqlite-lembed.
-Use the following command to download the model:
+   ```bash
+   just download-model
+   ```
 
-just download-model
+   This downloads the `all-MiniLM-L6-v2` model to `sql/models/`.
 
-This will download the model into the sql/models/ folder.
+## Usage
 
-Usage
+### Initializing the Database
 
-Initializing the Database
-
-To start using the hypergraph database, first create an instance of the HypergraphDB class and specify the path to the SQLite database file:
-
+```python
 from hypergraph_db import HypergraphDB
 
 # Initialize the database (or connect to an existing one)
 db = HypergraphDB("mydatabase.db")
+```
 
-This will automatically initialize the database schema if it hasn’t been created yet, and load the necessary SQLite extensions (sqlite-vec and sqlite-lembed).
+This initializes the database schema if needed and loads the `sqlite-vec` and `sqlite-lembed` extensions.
 
-Inserting Nodes and Hyperedges
+### Inserting Nodes and Hyperedges
 
-A node represents an entity in the hypergraph, stored as JSON data, and a hyperedge connects multiple nodes.
+A node represents an entity in the hypergraph, and a hyperedge connects multiple nodes.
 
-Insert a Node:
-
-from hypergraph_db import Node
+```python
+from hypergraph_db import Node, Hyperedge
 
 # Create a new node
 node = Node(body='{"id": "node1", "name": "Alpha"}')
 db.insert_node(node)
 
-Insert a Hyperedge:
-
-from hypergraph_db import Hyperedge
-
 # Create a hyperedge that connects node1 and node2
 hyperedge = Hyperedge(edge_id="edge1", properties='{"relationship": "friend"}', nodes='["node1", "node2"]')
 db.insert_hyperedge(hyperedge)
 
-# Map the nodes to the hyperedge with specific order
+# Map nodes to the hyperedge with specific order
 db.insert_node_hyperedge_map("edge1", "node1", 1)
 db.insert_node_hyperedge_map("edge1", "node2", 2)
+```
 
-Inserting Embeddings
+### Inserting Embeddings
 
-You can use the sqlite-lembed extension to generate text embeddings for nodes and store them in the hypergraph.
+Generate text embeddings for nodes using `sqlite-lembed`.
 
-Insert an Embedding:
-
+```python
 from hypergraph_db import EmbeddingMetadata
 
-# Generate and insert embedding for a node's content
+# Generate and insert an embedding for a node's content
 embedding_metadata = EmbeddingMetadata(
     metadata_id="embed1",
     node_id=node.id,
@@ -120,102 +119,103 @@ embedding_metadata = EmbeddingMetadata(
     end_idx=len(node.body),
 )
 db.insert_embedding(embedding_metadata, node.body)
+```
 
-Batch Inserting Embeddings
+### Batch Inserting Embeddings
 
-To improve performance when dealing with large datasets, you can batch insert embeddings.
+Insert multiple embeddings in a single transaction.
 
-# List of embeddings metadata and corresponding texts
+```python
 embeddings_metadata = [
     EmbeddingMetadata(metadata_id="embed2", node_id="node2", model="all-MiniLM-L6-v2", start_idx=0, end_idx=100),
     EmbeddingMetadata(metadata_id="embed3", node_id="node3", model="all-MiniLM-L6-v2", start_idx=0, end_idx=150),
 ]
 texts = ["This is the content for node 2", "This is the content for node 3"]
 
-# Batch insert embeddings
 db.insert_embeddings_batch(embeddings_metadata, texts)
+```
 
-Searching Nodes
+### Searching Nodes
 
-You can search for nodes by properties stored in their JSON data.
-
+```python
 # Search nodes with a specific property
 nodes = db.search_nodes_by_property("name", "Alpha")
 for n in nodes:
     print(n.to_dict())
+```
 
-Performing Vector Search
+### Performing Vector Search
 
-After embeddings have been generated and stored, you can perform vector similarity searches using sqlite-vec.
-
+```python
 # Perform a vector search based on query text
 results = db.search_embeddings(query_text="Alpha", top_k=3)
 for result in results:
     print(result)
+```
 
-Hypergraph Traversal
+### Hypergraph Traversal
 
-You can traverse the hypergraph, starting from a particular node, and explore connected nodes and hyperedges.
-
+```python
 # Traverse the hypergraph from node1
 traversal = db.traverse_hypergraph("node1")
 for node in traversal:
     print(node)
+```
 
-Closing the Database Connection
+### Closing the Database Connection
 
-Always close the database connection when you’re done using it:
-
+```python
 db.close()
+```
 
-Running Tests
+## Running Tests
 
-Unit tests for the hypergraph database are included and can be run using pytest. Make sure you have pytest installed:
+Unit tests are included and can be run with `pytest`.
 
+```bash
 poetry add pytest --dev
-
-To run the tests:
-
 pytest
+```
 
 The test suite includes tests for:
 
-  •	Inserting and retrieving nodes
-  •	Inserting and updating hyperedges
-  •	Generating and storing embeddings
-  •	Traversing the hypergraph
-  •	Batch operations
+- Inserting and retrieving nodes
+- Inserting and updating hyperedges
+- Generating and storing embeddings
+- Traversing the hypergraph
+- Batch operations
 
-Contributing
+## Contributing
 
-Contributions are welcome! If you’d like to contribute, please follow these steps:
+Contributions are welcome!
 
-  1.	Fork the repository.
-  2.	Create a new branch (git checkout -b feature-branch).
-  3.	Commit your changes (git commit -m 'Add new feature').
-  4.	Push to the branch (git push origin feature-branch).
-  5.	Open a pull request.
+1. Fork the repository.
+2. Create a new branch: `git checkout -b feature-branch`.
+3. Commit your changes: `git commit -m 'Add new feature'`.
+4. Push to the branch: `git push origin feature-branch`.
+5. Open a pull request.
 
 Please ensure that your code follows Python best practices and is formatted using Black.
 
-To format the code with Black:
-
+```bash
 black .
+```
 
-License
+## License
 
-This project is licensed under the MIT License. See the LICENSE file for details.
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
-Summary
+## Summary
 
-This project provides a fully functional Python API for managing a temporal directed hypergraph with text embeddings. It leverages SQLite, sqlite-vec, and sqlite-lembed to enable efficient storage, retrieval, and querying of nodes, hyperedges, and embeddings.
+This project provides a Python API for managing a temporal directed hypergraph with text embeddings. It leverages SQLite, `sqlite-vec`, and `sqlite-lembed` to enable efficient storage, retrieval, and querying of nodes, hyperedges, and embeddings.
 
 The API supports:
 
-  •	Inserting nodes and hyperedges
-  •	Generating and storing text embeddings
-  •	Performing vector similarity searches
-  •	Traversing the hypergraph
-  •	Batch operations for improved performance
+- Inserting nodes and hyperedges
+- Generating and storing text embeddings
+- Performing vector similarity searches
+- Traversing the hypergraph
+- Batch operations for improved performance
 
 Feel free to contribute, report issues, or use the API in your own projects!
+
