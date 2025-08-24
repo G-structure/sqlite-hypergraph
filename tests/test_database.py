@@ -62,3 +62,22 @@ def test_traverse_hypergraph(db):
 
     traversal = db.traverse_hypergraph("node1")
     assert len(traversal) > 0
+
+
+def test_search_hyperedges_multiple_nodes(db):
+    node_ids = ["node1", "node2", "node3"]
+    nodes = [Node(body=f"{{\"id\": \"{nid}\"}}") for nid in node_ids]
+    for node in nodes:
+        db.insert_node(node)
+
+    hyperedge = Hyperedge(
+        edge_id="edge_multi",
+        properties="{}",
+        nodes=str(node_ids).replace("'", '"'),
+    )
+    db.insert_hyperedge(hyperedge)
+    for order, nid in enumerate(node_ids, 1):
+        db.insert_node_hyperedge_map("edge_multi", nid, order)
+
+    results = db.search_hyperedges(node_ids)
+    assert any(row["hyperedge_id"] == "edge_multi" for row in results)
