@@ -1,4 +1,7 @@
-import sqlite3
+try:
+    import pysqlite3 as sqlite3
+except ModuleNotFoundError:  # pragma: no cover - fallback when extension not available
+    import sqlite3
 from typing import List, Optional, Any, Dict
 from pathlib import Path
 
