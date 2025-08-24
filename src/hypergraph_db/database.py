@@ -102,9 +102,9 @@ class HypergraphDB:
 
     def search_hyperedges(self, node_ids: List[str]):
         """Search for hyperedges that connect specific nodes."""
-        sql = SQLScripts.get_script("search_hyperedges.sql")
+        sql_template = SQLScripts.get_script("search_hyperedges.sql")
         placeholders = ",".join(["?"] * len(node_ids))
-        query = sql.replace("?", placeholders, 1)
+        query = sql_template.format(placeholders=placeholders)
         params = node_ids + [len(node_ids)]
         cursor = self.connection.execute(query, params)
         return cursor.fetchall()
